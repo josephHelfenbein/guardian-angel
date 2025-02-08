@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   AlertCircle,
   Camera,
@@ -17,6 +17,8 @@ export default function Page() {
   const [alertLevel, setAlertLevel] = useState('Normal');
   const [eyesClosedCount, setEyesClosedCount] = useState(0);
   const [drivingTime, setDrivingTime] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -40,6 +42,37 @@ export default function Page() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const startCamera = async () => {
+    if (videoRef.current) {
+      try {
+        const userMediaStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        videoRef.current.srcObject = userMediaStream;
+        setStream(userMediaStream);
+      } catch (error) {
+        console.error('Error accessing camera:', error);
+      }
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      const tracks = stream.getTracks();
+      tracks.forEach((track) => track.stop());
+      setStream(null);
+    }
+  };
+
+  const toggleMonitoring = () => {
+    if (isMonitoring) {
+      stopCamera();
+    } else {
+      startCamera();
+    }
+    setIsMonitoring(!isMonitoring);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 text-gray-900 dark:bg-gray-900 dark:text-white">
       <div className="mx-auto max-w-4xl">
@@ -57,7 +90,13 @@ export default function Page() {
         <div className="grid gap-6 md:grid-cols-3">
           <div className="rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800 md:col-span-2">
             <div className="mb-4 flex aspect-video items-center justify-center rounded-lg bg-gray-300 dark:bg-gray-700">
-              <Camera size={48} className="text-gray-400 dark:text-gray-600" />
+              {/* Displaying the live video feed */}
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                className="h-full w-full rounded-lg object-cover"
+              />
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -67,7 +106,7 @@ export default function Page() {
                 <span className="font-semibold">{alertLevel}</span>
               </div>
               <button
-                onClick={() => setIsMonitoring(!isMonitoring)}
+                onClick={toggleMonitoring}
                 className={`rounded-full px-4 py-2 font-semibold ${
                   isMonitoring
                     ? 'bg-red-500 text-white hover:bg-red-600'
