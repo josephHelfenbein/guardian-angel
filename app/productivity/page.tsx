@@ -28,6 +28,61 @@ export default function Page() {
   const [newTask, setNewTask] = useState('');
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [ws, setWs] = useState<WebSocket | null>(null);
+  const connectWebSocket = () => {
+    const socket = new WebSocket('ws://localhost:8000/ws');
+    socket.onopen = () => console.log('Connected to WebSocket');
+    socket.onclose = () => console.log('Disconnected from WebSocket');
+    setWs(socket);
+  };
+
+  const disconnectWebSocket = () => {
+    if (ws) {
+      ws.close();
+      setWs(null);
+    }
+  };
+  const captureFrame = () => {
+    if (
+      !videoRef.current ||
+      !canvasRef.current ||
+      !ws ||
+      ws.readyState !== WebSocket.OPEN
+    ) {
+      return;
+    }
+
+    const ctx = canvasRef.current.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(
+        videoRef.current,
+        0,
+        0,
+        canvasRef.current.width,
+        canvasRef.current.height,
+      );
+      const imageData = canvasRef.current.toDataURL('image/jpeg');
+      ws.send(imageData);
+    }
+  };
+  const toggleMonitoring = () => {
+    if (isMonitoring) {
+      stopCamera();
+      disconnectWebSocket();
+    } else {
+      startCamera();
+      connectWebSocket();
+    }
+    setIsMonitoring(!isMonitoring);
+  };
+  useEffect(() => {
+    let frameInterval: NodeJS.Timeout;
+    if (isMonitoring) {
+      frameInterval = setInterval(captureFrame, 100);
+    }
+    return () => clearInterval(frameInterval);
+  }, [isMonitoring, ws]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -96,15 +151,6 @@ export default function Page() {
     }
   };
 
-  const toggleMonitoring = () => {
-    if (isMonitoring) {
-      stopCamera();
-    } else {
-      startCamera();
-    }
-    setIsMonitoring(!isMonitoring);
-  };
-
   return (
     <div className="min-h-screen bg-gray-100 p-4 text-gray-900 dark:bg-gray-900 dark:text-white">
       <div className="mx-auto max-w-4xl">
@@ -127,6 +173,12 @@ export default function Page() {
                 autoPlay
                 muted
                 className="h-full w-full rounded-lg object-cover"
+              />
+              <canvas
+                ref={canvasRef}
+                className="hidden"
+                width={640}
+                height={480}
               />
             </div>
             <div className="flex items-center justify-between">
