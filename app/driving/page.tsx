@@ -11,7 +11,7 @@ import {
   Play,
   Square,
 } from 'lucide-react';
-import { useToast } from '#/hooks/use-toast';
+import { useToast } from '../../hooks/use-toast';
 
 export default function Page() {
   const [isMonitoring, setIsMonitoring] = useState(false);
