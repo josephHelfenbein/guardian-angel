@@ -6,17 +6,17 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Next.js App Router',
-    template: '%s | Next.js App Router',
+    default: 'Guardian Angel',
+    template: '%s | Guardian Angel',
   },
   metadataBase: new URL('https://app-router.vercel.app'),
   description:
-    'A playground to explore new Next.js App Router features such as nested layouts, instant loading states, streaming, and component level data fetching.',
+    'AI-powered driving safety assistant that helps keep you alert and focused on the road.',
   openGraph: {
-    title: 'Next.js App Router Playground',
+    title: 'Guardian Angel - Your AI Driving Assistant',
     description:
-      'A playground to explore new Next.js App Router features such as nested layouts, instant loading states, streaming, and component level data fetching.',
-    images: [`/api/og?title=Next.js App Router`],
+      'AI-powered driving safety assistant that helps keep you alert and focused on the road.',
+    images: [`/api/og?title=Guardian Angel`],
   },
   twitter: {
     card: 'summary_large_image',
@@ -30,13 +30,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="{theme}">
-      <body className="overflow-y-scroll bg-gray-100 bg-[url('/grid.svg')] pb-36 dark:bg-gray-1100">
+      <body className="overflow-y-scroll bg-gray-100 bg-[url('/grid.svg')] dark:bg-gray-1100">
         <GlobalNav />
 
-        <div className="lg:pl-72">
-          <div className="mx-auto max-w-4xl space-y-8 px-2 pt-20 lg:px-8 lg:py-8">
+        <div className="w-full">
+          <div className="mx-auto max-w-7xl space-y-8 px-4 pt-20 lg:px-8 lg:py-8">
             <div className="rounded-lg bg-vc-border-gradient p-px shadow-lg shadow-black/20">
-              <div className="rounded-lg bg-white p-3.5 dark:bg-black lg:p-6">
+              <div className="rounded-lg bg-white p-4 dark:bg-black lg:p-8">
                 {children}
               </div>
             </div>
