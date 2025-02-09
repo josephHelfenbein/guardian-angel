@@ -62,10 +62,6 @@ async def websocket_endpoint(websocket: WebSocket):
                                     "detected": False
                                 })
                             
-                            # Display the processed frame
-                            cv2.imshow('output window', image)
-                            if cv2.waitKey(2) & 0xFF == 27:
-                                break
                     except Exception as e:
                         print(f"Error processing frame: {e}")
                         break
