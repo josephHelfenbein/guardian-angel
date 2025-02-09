@@ -25,6 +25,7 @@
     "dinero.js": "2.0.0-alpha.10",
     "framer-motion": "12.4.1",
     "fs": "0.0.1-security",
+    "https-localhost": "4.7.1",
     "lucide-react": "0.475.0",
     "ms": "3.0.0-canary.1",
     "next": "15.0.0-canary.193",
