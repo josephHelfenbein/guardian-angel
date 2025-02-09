@@ -31,6 +31,7 @@
 <div align="center">
 
 <a href="https://github.com/josephHelfenbein/hacknyu">
+  
   </a><h3>Guardian Angel</h3>
 
   <p align="center">
@@ -72,7 +73,11 @@
 
 Drowsy and distracted driving is a major cause of road accidents, often leading to severe consequences. We wanted to create a real-time AI-powered solution that helps drivers stay focused and safe by detecting when they look at their phone or close their eyes for too long.
 
+<img src='https://github.com/josephHelfenbein/hacknyu/blob/f0b897dc05164a42dbb41964b95ee6d6976ee2ba/demo.gif' width='1000' />
+  
 ### How it works
+
+<img src='https://github.com/josephHelfenbein/hacknyu/blob/f0b897dc05164a42dbb41964b95ee6d6976ee2ba/public/guardian_angel_system_diagram.png' width=500 />
 
 Guardian Angel continuously monitors the driver’s face using computer vision to detect signs of distraction or drowsiness. If the driver looks at their phone or closes their eyes for too long, the system sends an alert to help them refocus on the road.
 
