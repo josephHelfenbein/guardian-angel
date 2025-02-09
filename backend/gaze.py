@@ -10,10 +10,10 @@ def relative(landmark: NormalizedLandmark, shape: tuple[int, int, int]) -> tuple
 def relativeT(landmark: NormalizedLandmark, shape: tuple[int, int, int]) -> tuple[int, int, Literal[0]]:
      return (int(landmark.x * shape[1]), int(landmark.y * shape[0]), 0)
 
-def gaze(frame: ndarray, points: NormalizedLandmarkList) -> None:
+def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
     """
     The gaze function gets an image and face landmarks from mediapipe framework.
-    The function draws the gaze direction into the frame.
+    Returns the gaze direction as a string: 'forward', 'left', or 'right'
     """
 
     '''
@@ -78,12 +78,12 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> None:
 
     # 2d pupil location
     left_pupil = relative(points.landmark[468], frame.shape)
-    right_pupil = relative(points.landmark[473], frame.shape)
+    right_pupil = relative(points.landmark[473], frame.shape) # Comment out probably don't need this
 
     # Transformation between image point to world point
     _, transformation, _ = cv2.estimateAffine3D(image_points1, model_points)  # image to world transformation
 
-    if transformation is not None:  # if estimateAffine3D secsseded
+    if transformation is not None:  # if estimateAffine3D succeeded
         # project pupil image point into 3d world point
         pupil_world_cord = transformation @ np.array([[left_pupil[0], left_pupil[1], 0, 1]]).T
 
@@ -101,6 +101,30 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> None:
         gaze = left_pupil + (eye_pupil2D[0][0] - left_pupil) - (head_pose[0][0] - left_pupil)
 
         # Draw gaze line into screen
-        p1 = (int(left_pupil[0]), int(left_pupil[1]))
-        p2 = (int(gaze[0]), int(gaze[1]))
-        cv2.line(frame, p1, p2, (0, 0, 255), 2)
+        point1 = (int(left_pupil[0]), int(left_pupil[1]))
+        point2 = (int(gaze[0]), int(gaze[1]))
+
+        point1_arr = np.array([int(left_pupil[0]), int(left_pupil[1])])
+        point2_arr = np.array([int(gaze[0]), int(gaze[1])])
+
+        points_diff = point1_arr - point2_arr
+        abs_points_diff = abs(points_diff)
+
+        # Instead of printing, return the direction
+        if -10 > points_diff[1]:
+            print("down")
+            return "down"
+
+        elif 10 > points_diff[0] > -40:
+            print("forward")
+            return "forward"
+
+        elif points_diff[0] != abs_points_diff[0]:
+            print("left")
+            return "left"
+
+        else:
+            print("right")
+            return "right"
+    
+    return "unknown"  # Return unknown if transformation failed
