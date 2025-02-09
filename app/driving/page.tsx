@@ -11,6 +11,7 @@ import {
   Play,
   Square,
 } from 'lucide-react';
+import { useToast } from '#/hooks/use-toast';
 
 export default function Page() {
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -21,16 +22,34 @@ export default function Page() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const ws = useRef<WebSocket | null>(null);
-  const connectWebRTC = async () => {
+  const downTimer = useRef<NodeJS.Timeout | null>(null);
+  const { toast } = useToast();
+
+  const connectWebRTC = async (mediaStream: MediaStream) => {
     peerConnection.current = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
     });
 
-    if (stream) {
-      stream.getTracks().forEach((track) => {
-        peerConnection.current?.addTrack(track, stream);
+    try {
+      // Log the tracks we're adding
+      console.log('Adding tracks from stream:', mediaStream.getTracks());
+      mediaStream.getTracks().forEach((track) => {
+        if (peerConnection.current) {
+          console.log('Adding track:', track.kind);
+          peerConnection.current.addTrack(track, mediaStream);
+        }
       });
+    } catch (error) {
+      console.error('Error adding tracks:', error);
     }
+
+    // Add track event listener to verify tracks are being added
+    peerConnection.current.ontrack = (event) => {
+      console.log('Track received:', event.track.kind);
+      if (videoRef.current && event.streams[0]) {
+        videoRef.current.srcObject = event.streams[0];
+      }
+    };
 
     peerConnection.current.onicecandidate = (event) => {
       if (event.candidate && ws?.current) {
@@ -41,28 +60,102 @@ export default function Page() {
     };
   };
 
-  const connectWebSocket = () => {
+  const startSession = async () => {
+    if (!peerConnection.current) return;
+    try {
+      const offer = await peerConnection.current.createOffer({
+        offerToReceiveVideo: true,
+        offerToReceiveAudio: false,
+      });
+      await peerConnection.current.setLocalDescription(offer);
+      ws.current?.send(
+        JSON.stringify({
+          type: 'offer',
+          offer: {
+            sdp: offer.sdp,
+            type: offer.type,
+          },
+        }),
+      );
+    } catch (error) {
+      console.error('Error creating offer:', error);
+    }
+  };
+
+  const connectWebSocket = (mediaStream: MediaStream) => {
     ws.current = new WebSocket('ws://localhost:8000/api/ws');
-    ws.current.onopen = () => {
+    ws.current.onopen = async () => {
       console.log('Connected to WebSocket');
-      connectWebRTC();
+      await connectWebRTC(mediaStream);
+      await startSession();
     };
     ws.current.onclose = () => console.log('Disconnected from WebSocket');
     ws.current.onmessage = async (event) => {
       const data = JSON.parse(event.data);
-      if (data.type === 'offer') {
-        await peerConnection.current?.setRemoteDescription(
-          new RTCSessionDescription(data.offer),
-        );
-        const answer = await peerConnection.current?.createAnswer();
-        if (answer) {
-          await peerConnection?.current?.setLocalDescription(answer);
-          ws.current?.send(JSON.stringify({ type: 'answer', answer }));
+      if (data.type === 'answer' && peerConnection.current) {
+        try {
+          console.log('Received answer:', data.answer);
+          const remoteDesc = new RTCSessionDescription({
+            type: data.answer.type,
+            sdp: data.answer.sdp,
+          });
+          await peerConnection.current.setRemoteDescription(remoteDesc);
+          console.log('Remote description set successfully');
+        } catch (error) {
+          console.error('Error setting remote description:', error);
         }
-      } else if (data.type === 'candidate') {
-        await peerConnection.current?.addIceCandidate(
-          new RTCIceCandidate(data.candidate),
+      } else if (data.type === 'candidate' && peerConnection.current) {
+        try {
+          await peerConnection.current.addIceCandidate(data.candidate);
+        } catch (error) {
+          console.error('Error adding ICE candidate:', error);
+        }
+      } else if (data.direction) {
+        console.log(
+          'Gaze direction:',
+          data.direction,
+          'Detected:',
+          data.detected,
         );
+        if (data.detected) {
+          switch (data.direction) {
+            case 'forward':
+              if (downTimer.current) {
+                clearInterval(downTimer.current);
+                downTimer.current = null;
+              }
+              break;
+            case 'left':
+              if (downTimer.current) {
+                clearInterval(downTimer.current);
+                downTimer.current = null;
+              }
+              break;
+            case 'right':
+              if (downTimer.current) {
+                clearInterval(downTimer.current);
+                downTimer.current = null;
+              }
+              break;
+            case 'down':
+              if (!downTimer.current) {
+                downTimer.current = setInterval(() => {
+                  toast({
+                    title: 'Heads up!',
+                    description: 'You have been looking down for 5 seconds.',
+                  });
+                  const audio = new Audio('/alert.wav');
+                  audio.play();
+                }, 3000);
+              }
+              break;
+          }
+        } else {
+          if (downTimer.current) {
+            clearInterval(downTimer.current);
+            downTimer.current = null;
+          }
+        }
       }
     };
   };
@@ -72,13 +165,17 @@ export default function Page() {
     ws.current = null;
   };
 
-  const toggleMonitoring = () => {
+  const toggleMonitoring = async () => {
     if (isMonitoring) {
       stopCamera();
       disconnectWebSocket();
     } else {
-      startCamera();
-      connectWebSocket();
+      const mediaStream = await startCamera();
+      if (mediaStream) {
+        connectWebSocket(mediaStream);
+      } else {
+        console.error('Failed to start camera');
+      }
     }
     setIsMonitoring(!isMonitoring);
   };
@@ -91,10 +188,13 @@ export default function Page() {
         });
         videoRef.current.srcObject = userMediaStream;
         setStream(userMediaStream);
+        return userMediaStream;
       } catch (error) {
         console.error('Error accessing camera:', error);
+        return null;
       }
     }
+    return null;
   };
 
   const stopCamera = () => {

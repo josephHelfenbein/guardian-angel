@@ -19,7 +19,7 @@ export default function Page() {
             Stay Alert, Stay Safe
           </h1>
           <p className="text-xl text-gray-700 dark:text-gray-300 md:text-2xl">
-            AI-powered vigilance for driving and productivity
+            AI-powered vigilance for driving
           </p>
         </header>
 
@@ -30,13 +30,6 @@ export default function Page() {
           >
             <Car className="mr-2" size={24} />
             Driving Mode
-          </Link>
-          <Link
-            href="/productivity"
-            className="flex transform items-center rounded-full bg-green-600 px-8 py-4 text-lg font-bold text-white transition duration-300 ease-in-out hover:scale-105 hover:bg-green-700"
-          >
-            <Laptop className="mr-2" size={24} />
-            Productivity Mode
           </Link>
           <Link
             href="/dashboards"
