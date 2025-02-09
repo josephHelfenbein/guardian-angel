@@ -3,7 +3,6 @@ import { AddressBar } from '#/ui/address-bar';
 import Byline from '#/ui/byline';
 import { GlobalNav } from '#/ui/global-nav';
 import { Metadata } from 'next';
-import { Toaster } from '../components/ui/toaster';
 
 export const metadata: Metadata = {
   title: {
@@ -40,7 +39,6 @@ export default function RootLayout({
               <div className="rounded-lg bg-white p-3.5 dark:bg-black lg:p-6">
                 {children}
               </div>
-              <Toaster />
             </div>
           </div>
         </div>

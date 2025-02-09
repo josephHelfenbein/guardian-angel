@@ -11,7 +11,6 @@ import {
   Play,
   Square,
 } from 'lucide-react';
-import { useToast } from '../../hooks/use-toast';
 
 export default function Page() {
   const [isMonitoring, setIsMonitoring] = useState(false);
@@ -23,7 +22,6 @@ export default function Page() {
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const ws = useRef<WebSocket | null>(null);
   const downTimer = useRef<NodeJS.Timeout | null>(null);
-  const { toast } = useToast();
 
   const connectWebRTC = async (mediaStream: MediaStream) => {
     peerConnection.current = new RTCPeerConnection({
@@ -140,10 +138,7 @@ export default function Page() {
             case 'down':
               if (!downTimer.current) {
                 downTimer.current = setInterval(() => {
-                  toast({
-                    title: 'Heads up!',
-                    description: 'You have been looking down for 5 seconds.',
-                  });
+                  alert('Heads up! You have been looking down for 5 seconds.');
                   const audio = new Audio('/alert.wav');
                   audio.play();
                 }, 3000);
