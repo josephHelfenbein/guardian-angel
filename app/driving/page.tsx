@@ -17,6 +17,7 @@ export default function Page() {
   const [alertLevel, setAlertLevel] = useState('Normal');
   const [eyesClosedCount, setEyesClosedCount] = useState(0);
   const [drivingTime, setDrivingTime] = useState(0);
+  const [phoneCheckCount, setPhoneCheckCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
@@ -138,10 +139,11 @@ export default function Page() {
             case 'down':
               if (!downTimer.current) {
                 downTimer.current = setInterval(() => {
-                  alert('Heads up! You have been looking down for 5 seconds.');
+                  setPhoneCheckCount((prev) => prev + 1);
+                  alert('Warning: Phone usage detected!');
                   const audio = new Audio('/alert.wav');
                   audio.play();
-                }, 3000);
+                }, 2000);
               }
               break;
           }
@@ -178,24 +180,45 @@ export default function Page() {
   const startCamera = async () => {
     if (videoRef.current) {
       try {
+        console.log('Requesting camera access...');
         const userMediaStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode: 'user',
+          },
         });
+        console.log('Camera access granted, setting up video stream...');
         videoRef.current.srcObject = userMediaStream;
+        videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded, playing...');
+          videoRef.current?.play();
+        };
         setStream(userMediaStream);
         return userMediaStream;
       } catch (error) {
         console.error('Error accessing camera:', error);
+        alert(
+          'Failed to access camera. Please make sure you have granted camera permissions.',
+        );
         return null;
       }
     }
+    console.error('Video reference not found');
     return null;
   };
 
   const stopCamera = () => {
     if (stream) {
+      console.log('Stopping camera stream...');
       const tracks = stream.getTracks();
-      tracks.forEach((track) => track.stop());
+      tracks.forEach((track) => {
+        console.log(`Stopping track: ${track.kind}`);
+        track.stop();
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
       setStream(null);
     }
   };
@@ -223,80 +246,143 @@ export default function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 text-gray-900 dark:bg-gray-900 dark:text-white">
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-6 flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
-          >
-            <ArrowLeft className="mr-2" />
-            Back to Home
-          </Link>
-          <h1 className="text-2xl font-bold">Driving Monitor</h1>
+    <div className="min-h-screen bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white">
+      <div className="r r mx-auto max-w-7xl rounded-lg px-4">
+        <header className="mb-2 flex h-16 items-center">
+          <div className="flex w-1/4 items-center">
+            <Link
+              href="/"
+              className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
+            >
+              <ArrowLeft className="mr-2" />
+              Back to Home
+            </Link>
+          </div>
+          <div className="w-2/4 text-center">
+            <h1 className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-4xl font-bold text-transparent">
+              Guardian Angel
+            </h1>
+          </div>
+          <div className="w-1/4"></div>
         </header>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800 md:col-span-2">
-            <div className="mb-4 flex aspect-video items-center justify-center rounded-lg bg-gray-300 dark:bg-gray-700">
+        <div className="grid gap-6 lg:grid-cols-4">
+          <div className="rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800 lg:col-span-3">
+            <div className="mb-4 flex aspect-[16/9] items-center justify-center rounded-lg bg-gray-300 dark:bg-gray-700">
               <video
                 ref={videoRef}
                 autoPlay
+                playsInline
                 muted
                 className="h-full w-full rounded-lg object-cover"
+                style={{ transform: 'scaleX(-1)' }}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div
-                  className={`mr-2 h-3 w-3 rounded-full ${alertLevel === 'Normal' ? 'bg-green-500' : 'bg-red-500'}`}
-                ></div>
-                <span className="font-semibold">{alertLevel}</span>
+            <div className="mt-6 flex flex-col space-y-4">
+              <div className="flex items-center justify-between px-4">
+                <div className="flex items-center">
+                  <div
+                    className={`mr-2 h-4 w-4 rounded-full ${
+                      alertLevel === 'Normal' ? 'bg-green-500' : 'bg-red-500'
+                    }`}
+                  ></div>
+                  <span className="text-lg font-semibold">{alertLevel}</span>
+                </div>
+                <button
+                  onClick={toggleMonitoring}
+                  className={`rounded-full px-4 py-2 text-base font-semibold transition-all ${
+                    isMonitoring
+                      ? 'bg-red-500 text-white hover:bg-red-600'
+                      : 'bg-green-500 text-white hover:bg-green-600'
+                  }`}
+                >
+                  {isMonitoring ? (
+                    <Square className="mr-2 inline h-4 w-4" />
+                  ) : (
+                    <Play className="mr-2 inline h-4 w-4" />
+                  )}
+                  {isMonitoring ? 'Stop Monitoring' : 'Start Monitoring'}
+                </button>
               </div>
-              <button
-                onClick={toggleMonitoring}
-                className={`rounded-full px-4 py-2 font-semibold ${
-                  isMonitoring
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : 'bg-green-500 text-white hover:bg-green-600'
-                }`}
-              >
-                {isMonitoring ? (
-                  <Square className="mr-2 inline" />
-                ) : (
-                  <Play className="mr-2 inline" />
-                )}
-                {isMonitoring ? 'Stop Monitoring' : 'Start Monitoring'}
-              </button>
+
+              <div className="mt-4 grid grid-cols-2 gap-4 px-4">
+                <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    Alertness Score
+                  </div>
+                  <div className="mt-1 flex items-center">
+                    <Eye className="mr-2 h-5 w-5 text-green-500" />
+                    <span className="text-xl font-bold text-green-500">
+                      {Math.max(
+                        0,
+                        100 - (eyesClosedCount * 5 + phoneCheckCount * 10),
+                      )}
+                      %
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    Session Time
+                  </div>
+                  <div className="mt-1 flex items-center">
+                    <Clock className="mr-2 h-5 w-5 text-blue-500" />
+                    <span className="text-xl font-semibold">
+                      {formatTime(drivingTime)}
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    Eyes Closed Events
+                  </div>
+                  <div className="mt-1 flex items-center">
+                    <AlertCircle className="mr-2 h-5 w-5 text-yellow-500" />
+                    <span className="text-xl font-semibold text-yellow-500">
+                      {eyesClosedCount}
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                    Phone Check Events
+                  </div>
+                  <div className="mt-1 flex items-center">
+                    <AlertCircle className="mr-2 h-5 w-5 text-red-500" />
+                    <span className="text-xl font-semibold text-red-500">
+                      {phoneCheckCount}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800">
-              <h2 className="mb-2 flex items-center text-xl font-semibold">
-                <Eye className="mr-2" /> Alertness
+            <div className="rounded-lg bg-white p-6 shadow-lg dark:bg-gray-800">
+              <h2 className="mb-4 flex items-center text-xl font-semibold">
+                <AlertCircle className="mr-2" /> Safety Tips
               </h2>
-              <p className="text-3xl font-bold">{100 - eyesClosedCount}%</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Eyes closed: {eyesClosedCount} times
-              </p>
-            </div>
-
-            <div className="rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800">
-              <h2 className="mb-2 flex items-center text-xl font-semibold">
-                <Clock className="mr-2" /> Driving Time
-              </h2>
-              <p className="text-3xl font-bold">{formatTime(drivingTime)}</p>
-            </div>
-
-            <div className="rounded-lg bg-white p-4 shadow-lg dark:bg-gray-800">
-              <h2 className="mb-2 flex items-center text-xl font-semibold">
-                <AlertCircle className="mr-2" /> Tips
-              </h2>
-              <ul className="list-inside list-disc text-sm">
-                <li>Take a break every 2 hours</li>
-                <li>Stay hydrated</li>
-                <li>Adjust your posture regularly</li>
+              <ul className="space-y-4 text-sm">
+                <li className="flex items-start rounded-lg bg-gray-50 p-3 dark:bg-gray-700">
+                  <span className="mr-2 mt-0.5 text-yellow-500">•</span>
+                  <p>
+                    Keep your eyes on the road - frequent checks reduce reaction
+                    time
+                  </p>
+                </li>
+                <li className="flex items-start rounded-lg bg-gray-50 p-3 dark:bg-gray-700">
+                  <span className="mr-2 mt-0.5 text-yellow-500">•</span>
+                  <p>Put your phone on "Do Not Disturb" while driving</p>
+                </li>
+                <li className="flex items-start rounded-lg bg-gray-50 p-3 dark:bg-gray-700">
+                  <span className="mr-2 mt-0.5 text-yellow-500">•</span>
+                  <p>Take a 15-minute break every 2 hours of driving</p>
+                </li>
+                <li className="flex items-start rounded-lg bg-gray-50 p-3 dark:bg-gray-700">
+                  <span className="mr-2 mt-0.5 text-yellow-500">•</span>
+                  <p>Maintain proper posture to prevent fatigue</p>
+                </li>
               </ul>
             </div>
           </div>
