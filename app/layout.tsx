@@ -33,7 +33,7 @@ export default function RootLayout({
       <body className="overflow-y-scroll bg-gray-100 bg-[url('/grid.svg')] pb-36 dark:bg-gray-1100">
         <GlobalNav />
 
-        <div className="lg:pl-72">
+        <div className="w-full">
           <div className="mx-auto max-w-4xl space-y-8 px-2 pt-20 lg:px-8 lg:py-8">
             <div className="rounded-lg bg-vc-border-gradient p-px shadow-lg shadow-black/20">
               <div className="rounded-lg bg-white p-3.5 dark:bg-black lg:p-6">
