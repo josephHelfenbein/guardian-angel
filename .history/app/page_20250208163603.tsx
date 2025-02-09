@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { AlertCircle, Car, Laptop, Sun, Moon, BarChart } from 'lucide-react';
+import { AlertCircle, Car, Laptop, Sun, Moon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Page() {
@@ -37,13 +37,6 @@ export default function Page() {
           >
             <Laptop className="mr-2" size={24} />
             Productivity Mode
-          </Link>
-          <Link
-            href="/dashboards"
-            className="flex transform items-center rounded-full bg-purple-600 px-8 py-4 text-lg font-bold text-white transition duration-300 ease-in-out hover:scale-105 hover:bg-purple-700"
-          >
-            <BarChart className="mr-2" size={24} />
-            Dashboards
           </Link>
         </div>
 
