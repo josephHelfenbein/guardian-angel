@@ -130,7 +130,7 @@ export default function Page() {
           playAlertSound();
           toast.error('⚠️ Wake Up! You appear to be falling asleep! 😴', {
             style: {
-              background: '#ef4444', // Red background for serious warning
+              background: '#eab308', // Red background for serious warning
             },
           });
           eyesClosedStartTime.current = null;
@@ -148,7 +148,7 @@ export default function Page() {
           playAlertSound();
           toast('⚠️ Eyes on the Road! Stop checking your phone! 📱', {
             style: {
-              background: '#eab308', // Yellow background for caution
+              background: '#ef4444', // Yellow background for caution
               color: '#fff',
               fontWeight: 'bold',
               fontSize: '1.1rem',
@@ -527,8 +527,8 @@ export default function Page() {
                       Eyes Closed Events
                     </div>
                     <div className="mt-1 flex items-center">
-                      <AlertCircle className="mr-2 h-5 w-5 text-yellow-500" />
-                      <span className="text-xl font-semibold text-yellow-500">
+                      <AlertCircle className="mr-2 h-5 w-5 text-red-500" />
+                      <span className="text-xl font-semibold text-red-500">
                         {eyesClosedCount}
                       </span>
                     </div>
@@ -538,8 +538,8 @@ export default function Page() {
                       Phone Check Events
                     </div>
                     <div className="mt-1 flex items-center">
-                      <AlertCircle className="mr-2 h-5 w-5 text-red-500" />
-                      <span className="text-xl font-semibold text-red-500">
+                      <AlertCircle className="mr-2 h-5 w-5 text-yellow-500" />
+                      <span className="text-xl font-semibold text-yellow-500">
                         {phoneCheckCount}
                       </span>
                     </div>
