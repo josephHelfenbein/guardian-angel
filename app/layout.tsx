@@ -3,7 +3,7 @@ import { AddressBar } from '#/ui/address-bar';
 import Byline from '#/ui/byline';
 import { GlobalNav } from '#/ui/global-nav';
 import { Metadata } from 'next';
-import { Toaster } from '#/components/ui/toaster';
+import { Toaster } from '../components/ui/toaster';
 
 export const metadata: Metadata = {
   title: {
