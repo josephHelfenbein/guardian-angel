@@ -5,6 +5,7 @@
     "build": "next build",
     "dev": "next dev --turbo",
     "lint": "next lint",
+    "server": "node server.js",
     "lint-staged": "lint-staged",
     "prettier": "prettier --write --ignore-unknown .",
     "prettier:check": "prettier --check --ignore-unknown .",
