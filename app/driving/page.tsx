@@ -19,44 +19,59 @@ export default function Page() {
   const [drivingTime, setDrivingTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  const peerConnection = useRef<RTCPeerConnection | null>(null);
+  const ws = useRef<WebSocket | null>(null);
+  const connectWebRTC = async () => {
+    peerConnection.current = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+    });
+
+    if (stream) {
+      stream.getTracks().forEach((track) => {
+        peerConnection.current?.addTrack(track, stream);
+      });
+    }
+
+    peerConnection.current.onicecandidate = (event) => {
+      if (event.candidate && ws?.current) {
+        ws.current.send(
+          JSON.stringify({ type: 'candidate', candidate: event.candidate }),
+        );
+      }
+    };
+  };
+
   const connectWebSocket = () => {
-    const socket = new WebSocket('ws://localhost:8000/ws');
-    socket.onopen = () => console.log('Connected to WebSocket');
-    socket.onclose = () => console.log('Disconnected from WebSocket');
-    setWs(socket);
+    ws.current = new WebSocket('ws://localhost:8000/api/ws');
+    ws.current.onopen = () => {
+      console.log('Connected to WebSocket');
+      connectWebRTC();
+    };
+    ws.current.onclose = () => console.log('Disconnected from WebSocket');
+    ws.current.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'offer') {
+        await peerConnection.current?.setRemoteDescription(
+          new RTCSessionDescription(data.offer),
+        );
+        const answer = await peerConnection.current?.createAnswer();
+        if (answer) {
+          await peerConnection?.current?.setLocalDescription(answer);
+          ws.current?.send(JSON.stringify({ type: 'answer', answer }));
+        }
+      } else if (data.type === 'candidate') {
+        await peerConnection.current?.addIceCandidate(
+          new RTCIceCandidate(data.candidate),
+        );
+      }
+    };
   };
 
   const disconnectWebSocket = () => {
-    if (ws) {
-      ws.close();
-      setWs(null);
-    }
+    ws.current?.close();
+    ws.current = null;
   };
-  const captureFrame = () => {
-    if (
-      !videoRef.current ||
-      !canvasRef.current ||
-      !ws ||
-      ws.readyState !== WebSocket.OPEN
-    ) {
-      return;
-    }
 
-    const ctx = canvasRef.current.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(
-        videoRef.current,
-        0,
-        0,
-        canvasRef.current.width,
-        canvasRef.current.height,
-      );
-      const imageData = canvasRef.current.toDataURL('image/jpeg'); // Convert to JPEG Base64
-      ws.send(imageData); // Send to WebSocket Server
-    }
-  };
   const toggleMonitoring = () => {
     if (isMonitoring) {
       stopCamera();
@@ -66,35 +81,6 @@ export default function Page() {
       connectWebSocket();
     }
     setIsMonitoring(!isMonitoring);
-  };
-  useEffect(() => {
-    let frameInterval: NodeJS.Timeout;
-    if (isMonitoring) {
-      frameInterval = setInterval(captureFrame, 100);
-    }
-    return () => clearInterval(frameInterval);
-  }, [isMonitoring, ws]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isMonitoring) {
-      interval = setInterval(() => {
-        setDrivingTime((prevTime) => prevTime + 1);
-        if (Math.random() < 0.1) {
-          setAlertLevel('Warning');
-          setEyesClosedCount((prev) => prev + 1);
-        } else {
-          setAlertLevel('Normal');
-        }
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isMonitoring]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const startCamera = async () => {
@@ -119,6 +105,28 @@ export default function Page() {
     }
   };
 
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isMonitoring) {
+      interval = setInterval(() => {
+        setDrivingTime((prevTime) => prevTime + 1);
+        if (Math.random() < 0.1) {
+          setAlertLevel('Warning');
+          setEyesClosedCount((prev) => prev + 1);
+        } else {
+          setAlertLevel('Normal');
+        }
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isMonitoring]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-4 text-gray-900 dark:bg-gray-900 dark:text-white">
       <div className="mx-auto max-w-4xl">
@@ -141,12 +149,6 @@ export default function Page() {
                 autoPlay
                 muted
                 className="h-full w-full rounded-lg object-cover"
-              />
-              <canvas
-                ref={canvasRef}
-                className="hidden"
-                width={640}
-                height={480}
               />
             </div>
             <div className="flex items-center justify-between">

@@ -51,7 +51,7 @@ export default function Page() {
   };
 
   const connectWebSocket = () => {
-    ws.current = new WebSocket('ws://localhost:8000/ws');
+    ws.current = new WebSocket('ws://localhost:8000/api/ws');
     ws.current.onopen = () => {
       console.log('Connected to WebSocket');
       connectWebRTC();
