@@ -54,16 +54,11 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
         (28.9, -28.9, -24.1)  # Right mouth corner
     ])
 
-    '''
-    3D model eye points
-    The center of the eye ball
-    '''
-    Eye_ball_center_right = np.array([[-29.05], [32.7], [-39.5]])
+    # 3D model eye points
+    # The center of the eye ball
     Eye_ball_center_left = np.array([[29.05], [32.7], [-39.5]])  # the center of the left eyeball as a vector.
 
-    '''
-    camera matrix estimation
-    '''
+    # camera matrix estimation
     focal_length = frame.shape[1]
     center = (frame.shape[1] / 2, frame.shape[0] / 2)
     camera_matrix = np.array(
@@ -78,7 +73,6 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
 
     # 2d pupil location
     left_pupil = relative(points.landmark[468], frame.shape)
-    right_pupil = relative(points.landmark[473], frame.shape) # Comment out probably don't need this
 
     # Transformation between image point to world point
     _, transformation, _ = cv2.estimateAffine3D(image_points1, model_points)  # image to world transformation
@@ -110,21 +104,16 @@ def gaze(frame: ndarray, points: NormalizedLandmarkList) -> str:
         points_diff = point1_arr - point2_arr
         abs_points_diff = abs(points_diff)
 
-        # Instead of printing, return the direction
         if -10 > points_diff[1]:
-            print("down")
             return "down"
 
         elif 10 > points_diff[0] > -40:
-            print("forward")
             return "forward"
 
         elif points_diff[0] != abs_points_diff[0]:
-            print("left")
             return "left"
 
         else:
-            print("right")
             return "right"
     
     return "unknown"  # Return unknown if transformation failed
