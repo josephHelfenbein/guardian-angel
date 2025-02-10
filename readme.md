@@ -31,7 +31,8 @@
 <div align="center">
 
 <a href="https://github.com/josephHelfenbein/hacknyu">
-  
+
+  <img src='https://github.com/josephHelfenbein/guardian-angel/blob/ad28f5b7e89e514f2a1b0942344ed09d7f1967f4/public/logo.svg' width=80 />
   </a><h3>Guardian Angel</h3>
 
   <p align="center">
