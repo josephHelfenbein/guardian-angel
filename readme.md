@@ -126,12 +126,22 @@ Here are the steps to run the project locally if you want to develop your own pr
   ```sh
   npm install npm@latest -g
   ```
+- pip
+```sh
+python3 -m venv ./backend/venv && \
+source ./backend/venv/bin/activate && \
+pip install -r ./backend/requirements.txt
+```
+
+### Run Frontend
 
 You can run the project using 
 ```sh
 npm run server
 ```
 
+### Run Backend
+FastAPI
 
 <!-- LICENSE -->
 ## License
