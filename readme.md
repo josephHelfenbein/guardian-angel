@@ -141,7 +141,9 @@ npm run server
 ```
 
 ### Run Backend
-FastAPI
+```sh
+python3 -m fastapi dev ./backend/main.py
+```
 
 <!-- LICENSE -->
 ## License
